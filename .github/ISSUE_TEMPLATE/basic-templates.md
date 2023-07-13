@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-## Perpose
+## Purpose
 >
 
 ## Check List
