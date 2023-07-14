@@ -55,7 +55,9 @@ const Button = React.createElement("button", {
 
 ### 3.2. JSX 사용하기
 - javascript를 확장한 것으로 요소를 만들 때 활용한다.
-- 작성법은 HTML과 매우매우 흡사하다.
+- 작성법은 HTML과 매우매우 흡사하다. 하지만 javascript이다.
+- javascript에서 사용하는 키워드를 사용할 수 없다. 예를 들면 label 태그의 for(htmlFor로 사용)와 모든 태그에 널리 쓰이는 class(className으로 사용)가 있다.
+- 자바스크립트 변수를 활용하여 값을 입력할 땐 따옴표로 입력하지않고 중괄호{}를 쓴다.
 - 아래의 코드는 위의 createElement와 같은 결과를 만드는 JSX이다.
 **html과 구분하기 위해서 PascalCase 형태로 작성한다.**
 ```js
@@ -69,11 +71,139 @@ const Button = () => (
 ```
 
 ## 4. State
-### 4.1. State
+### 4.1. State를 안 쓰는 경우
+- render를 값이 바뀔 때마다 다시 해줘야 한다.
+- 이는 모양도 코드 유지보수성도 영 좋지 못하다.
+
+
+### 4.2. State 사용하기
 - State는 기본적으로 데이터가 저장되는 곳
 - React.js는 변경된 부분만 업데이트됩니다.
 - 일반 자바스크립트 코드로 작성한 페이지는 노드 정보가 바뀔때마다 5단계에 걸쳐서 노드 트리를 처음부터 다시 생성
 - 리액트는 가상돔을 써서 우리 시야에 보이는 부분만 수정해서 보여주고 모든 업데이트가 끝나면 일괄로 합쳐서 실제 돔에 던져준다고 합니다.
 
+```js
+[value, setValue] = React.useState(초기값) // React.useState는 [value, modifier] 배열을 반환한다. 이를 배열 형태로 할당 받으면 언패킹되어 value와 setValue로 할당 받을 수 있다.
+```
+
+#### 4.2.1. modifier를 사용하는 방법
+1. 리터럴 값으로 할당하는 경우
+```js
+setValue(리터럴 값) // 리터럴을 할당하면 끝.
+```
+
+2. 현재 값을 기준으로 변경이 필요한 경우
+> 예를 들어 현재 값을 기준으로 1을 증가해야하는 경우라면
+```js
+setValue(value => value + 1) // 함수 형태로 작성한다.
+```
+
+React 코드에서 Event Listener의 콜백함수의 첫 인수에 받아오는 객체: Synthetic Event(합성 이벤트)
+이 SyntheticEvent는 JS가 아닌 React에서 발생시키는 이벤트로 React가 동작하는데 있어 최적화된 이벤트라고 생각하면 된다. 원래의 JS의 native event를 얻기 위해선 nativeEvent라는 속성을 찾으면 된다.
+
+참고로 SyntheticEvent 하위 속성에 target이 존재하고 그 속성을 살펴보면 value를 찾을 수 있다. 이 SyntheticEvent.target.value는 input 태그의 속성인 value에 해당되는 값이다.
+```js
+const onChange = (event) => { // 첫 인수의 event가 React에서 제공하는 SyntheticEvent 객체
+    console.log(event.target.value) // onChange 이벤트가 발생한 태그의 value 속성을 콘솔에 출력
+}
+```
+
+> 지금까지 isolation과 encapsulation 적용해서 모든 JSX를 분리된 컴포넌트로 생성
+> -> 이는 컴포넌트 단위로 재사용 가능
+> 컴포넌트는 함수를 통해 작성하고 이 함수는 JSX를 반환
 
 ## 5. Props
+- 부모 컴포넌트로부터 자식 컴포넌트에 데이터를 보낼 수 있게 해주는 방법
+- 함수 정의부에 소괄호 안에 arguments로 React가 값을 전달한다.
+- 이때 이 인자를 props라고 한다. 즉 React는 JSX로 작성한 attributes 모두를 하나의 객체에 담아 props 인자로 전달한다.
+```js
+function Component(props) {
+    return (
+        <tag value={props.value}>{props.text}</tag>
+    )
+}
+
+function App() {
+    return (
+        <div>
+            <Component text="텍스트" value="1" />
+        </div>
+    )
+}
+```
+
+- 컴포넌트를 작성한 함수 정의부에 인자는 단 하나만 갖는다.
+- 보통은 props라는 하나의 인자만 정의해서 사용하지 않고 중괄호{}로 작성하여 변수에 언패킹해서 바로 받을 수 있다.
+```js
+function Component({text, value}) {
+    return (
+        <tag value={value}>{text}</tag>
+    )
+}
+
+function App() {
+    return (
+        <div>
+            <Component text="텍스트" value="1" />
+        </div>
+    )
+}
+```
+
+- 함수로 정의한 컴포넌트는 onClick과 같은 이벤트를 직접 다는 것이 아니라 props로 전달된다.
+```js
+function Component({text, value, onClick}) {
+    return (
+        <tag value={value} onClick={onClick}>{text}</tag> // onClick 함수가 여기서 이벤트의 콜백 함수로 등록된다.
+    )
+}
+
+function App() {
+    return (
+        <div>
+            <Component text="텍스트" value="1" onClick={() => console.log("I'm clicked")} />
+            // 위 코드에서 onClick은 props로 전달되고, 이를 Component에서는 onClick으로 받아서 사용한다.
+        </div>
+    )
+}
+```
+
+- javascript는 일급 객체이므로 함수를 인자로 전달할 수 있다.
+- 일급 객체: 변수에 할당할 수 있고, 함수의 인자로 전달할 수 있고, 함수의 반환값으로 사용할 수 있다.
+
+
+### 5.1. Memoization
+- 부모 요소가 state가 변경되어 다시 렌더링되면 자식 요소도 다시 렌더링됩니다.
+- 자식 요소가 state와 관련o이 없다면 불필요한 렌더링이 발생합니다.
+- 이를 방지하기 위해 React.memo를 사용합니다.
+- React.memo는 컴포넌트를 렌더링할 때 이전에 렌더링한 결과를 재사용합니다.
+- 이전에 렌더링한 결과를 재사용하기 때문에 불필요한 렌더링을 방지할 수 있습니다.
+- React.memo는 컴포넌트의 props가 변경되었을 때만 렌더링을 수행합니다.
+- 성능 최적화를 위해 사용합니다.
+
+### 5.2. Props Type
+- 컴포넌트의 props를 검증하기 위해 사용합니다.
+- 컴포넌트의 props가 올바른 값인지 확인할 수 있습니다.
+- 컴포넌트의 props가 올바른 값이 아닌 경우, 콘솔에 경고 메시지를 출력합니다.
+- 컴포넌트의 props를 검증하기 위해 prop-types 라이브러리를 사용합니다.
+- prop-types 라이브러리는 컴포넌트의 props를 검증할 때 사용합니다.
+- prop-types 라이브러리를 설치합니다.
+```js
+npm install prop-types
+```
+- prop-types 라이브러리를 사용하여 컴포넌트의 props를 검증합니다.
+```js
+import PropTypes from 'prop-types';
+
+function Component({text, value, onClick}) {
+    return (
+        <tag value={value} onClick={onClick}>{text}</tag>
+    )
+}
+
+Component.propTypes = {
+    text: PropTypes.string.isRequired,
+    value: PropTypes.number.isRequired,
+    onClick: PropTypes.func.isRequired,
+}
+```
