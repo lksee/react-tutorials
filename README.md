@@ -207,3 +207,108 @@ Component.propTypes = {
     onClick: PropTypes.func.isRequired,
 }
 ```
+
+
+## 6. Effect
+- Effect Hook은 함수형 컴포넌트에서 side effect를 수행할 수 있게 해줍니다.
+- side effect는 컴포넌트의 상태(state)를 변경하는 작업을 의미합니다.
+- Effect Hook은 컴포넌트가 렌더링될 때마다 특정 작업을 수행하도록 설정할 수 있습니다.
+- Effect Hook은 클래스형 컴포넌트의 componentDidMount와 componentDidUpdate, componentWillUnmount 메서드와 같은 역할을 합니다.
+- Effect Hook은 함수형 컴포넌트에서만 사용할 수 있습니다.
+- Effect Hook은 함수형 컴포넌트의 렌더링 결과가 실제 돔에 반영된 후에 실행됩니다.
+- Effect Hook은 렌더링 직후마다 실행됩니다.
+- Effect Hook은 렌더링 직후마다 실행되기 때문에, 렌더링 결과가 실제 돔에 반영된 후에 실행됩니다.
+
+### 6.1. state의 변경마다 전체가 다시 렌더링되는 이유
+- state가 변경되면 컴포넌트가 다시 렌더링됩니다. 즉 컴포넌트의 모든 코드가 다시 실행됩니다.
+```js
+function App() {
+    const [counter, setCounter] = useState(0);
+    const onClick = () => {
+        setCounter((prev) => prev + 1);
+    }
+    console.log("rendered");
+    return (
+        <div>
+            <h1>{counter}</h1>
+            <button onClick={onClick}>Click me!</button>
+        </div>
+    )
+}
+```
+- 위 코드에서 버튼을 클릭하면 state가 변경되고, 컴포넌트가 다시 렌더링됩니다. 이때 컴포넌트의 모든 코드가 다시 실행됩니다. 따라서 console.log("rendered")가 state가 변경될 때마다 실행됩니다.
+- console.log("rendered")가 엄청 무거운 코드이고 단 1회만 실행돼야 하는 부분이라고 상상해봅시다. 즉 state가 변경될 때마다 실행하는 것이 불필요하다고 상상해봅시다.
+- console.log("rendered")가 state가 변경될 때마다 실행되지 않도록 하려면 어떻게 해야 할까요? 이때 Effect Hook을 사용합니다.
+
+### 6.2. Effect Hook 사용하기
+```js
+function App() {
+    const [counter, setCounter] = useState(0);
+    const onClick = () => {
+        setCounter((prev) => prev + 1);
+    }
+    useEffect(() => {
+        console.log("just once");
+    }, []); // 두 번째 인수로 빈 배열을 전달하면, 컴포넌트가 처음 렌더링될 때만 실행됩니다.
+    console.log("rendered");
+    return (
+        <div>
+            <h1>{counter}</h1>
+            <button onClick={onClick}>Click me!</button>
+        </div>
+    )
+}
+```
+
+### 6.3. Effect Hook의 두 번째 인수
+- Effect Hook의 두 번째 인수로 빈 배열을 전달하면, 컴포넌트가 처음 렌더링될 때만 실행됩니다.
+- Effect Hook의 두 번째 인수로 배열을 전달하면, 배열에 포함된 값(state)이 변경될 때마다 첫 번째 인수의 함수가 실행됩니다.
+- 특정 state가 변경될 때만 실행되도록 하려면, Effect Hook의 두 번째 인수로 배열을 전달하면 됩니다.
+```js
+function App() {
+    const [counter, setCounter] = useState(0);
+    const [name, setName] = useState("");
+    const onClick = () => {
+        setCounter((prev) => prev + 1);
+    }
+    useEffect(() => {
+        console.log("counter changed");
+    }, [counter]); // counter가 변경될 때만 실행됩니다.
+    useEffect(() => {
+        console.log("name changed");
+    }, [name]); // name이 변경될 때만 실행됩니다.
+    console.log("rendered");
+    return (
+        <div>
+            <h1>{counter}</h1>
+            <button onClick={onClick}>Click me!</button>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+    )
+}
+```
+
+### 6.4. Effect Hook의 반환값
+- Effect Hook의 첫 번째 인수로 전달한 함수는 반환값으로 cleanup 함수를 반환할 수 있습니다.
+- cleanup 함수는 컴포넌트가 언마운트될 때 실행됩니다.
+- Effect Hook의 반환값으로 콜백 함수를 반환하면, 컴포넌트가 언마운트될 때 콜백 함수가 실행됩니다.
+```js
+function App() {
+    function Hello() {
+        useEffect(() => {
+            console.log("Hello mounted");
+            return () => {
+                console.log("Hello unmounted");
+            } // cleanup 함수
+        }, []);
+        return <div>Hello</div>
+    }
+    const [visible, setVisible] = useState(false);
+    return (
+        <div>
+            <button onClick={() => setVisible((prev) => !prev)}>Toggle</button>
+            {visible && <Hello />}
+        </div>
+    )
+}
+```
